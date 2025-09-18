@@ -212,3 +212,6 @@ def imageToSpeech(img):
     textToSpeech(imageToText(img))
 def imageToBraille(img):
     textToBraille(imageToText(img))
+
+# Commented out to avoid error when importing the module
+# imageToText("puretext.jpeg")

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Braille to Speech Converter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation Bar -->
+        <nav class="nav-bar">
+            <div class="logo">BrailleSpeech</div>
+            <ul class="nav-links">
+                <li class="active"><a href="#"><i class="fas fa-home"></i><span>Home</span></a></li>
+                <li><a href="#"><i class="fas fa-cog"></i><span>Settings</span></a></li>
+                <li><a href="#"><i class="fas fa-info-circle"></i><span>About</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <h1 class="title">Braille to Speech Converter</h1>
+            <p class="subtitle">Transform Braille into spoken words with futuristic technology</p>
+
+            <!-- Input Section -->
+            <section class="input-section">
+                <div class="input-container">
+                    <textarea id="braille-input" placeholder="Enter Braille text or click the keyboard below to type"></textarea>
+                </div>
+
+                <!-- Braille Keyboard -->
+                <div class="braille-keyboard-container">
+                    <h3>Braille Keyboard</h3>
+                    <div class="braille-keyboard">
+                        <div class="braille-cell">
+                            <div class="braille-dot" data-position="1"></div>
+                            <div class="braille-dot" data-position="2"></div>
+                            <div class="braille-dot" data-position="3"></div>
+                            <div class="braille-dot" data-position="4"></div>
+                            <div class="braille-dot" data-position="5"></div>
+                            <div class="braille-dot" data-position="6"></div>
+                        </div>
+                        <div class="keyboard-controls">
+                            <button id="add-character" class="control-btn">Add Character</button>
+                            <button id="clear-keyboard" class="control-btn">Clear</button>
+                        </div>
+                    </div>
+                    <div class="current-character">Current: <span id="current-char">None</span></div>
+                </div>
+            </section>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button id="convert-btn" class="primary-btn">
+                    <span class="btn-text">Convert to Speech</span>
+                    <i class="fas fa-volume-up"></i>
+                </button>
+                <button id="clear-btn" class="secondary-btn">
+                    <span class="btn-text">Clear All</span>
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+
+            <!-- Output Section -->
+            <section class="output-section">
+                <div class="waveform-container">
+                    <h3>Audio Visualization</h3>
+                    <div id="waveform"></div>
+                    <div class="audio-controls">
+                        <button id="play-btn" class="audio-btn"><i class="fas fa-play"></i></button>
+                        <button id="pause-btn" class="audio-btn"><i class="fas fa-pause"></i></button>
+                        <button id="stop-btn" class="audio-btn"><i class="fas fa-stop"></i></button>
+                    </div>
+                </div>
+
+                <div class="text-output-container">
+                    <h3>Converted Text</h3>
+                    <div id="text-output" class="text-output"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Decorative Elements -->
+        <div class="decorative-elements">
+            <div class="geometric-shape shape-1"></div>
+            <div class="geometric-shape shape-2"></div>
+            <div class="geometric-shape shape-3"></div>
+            <div class="accent-line line-1"></div>
+            <div class="accent-line line-2"></div>
+            <div class="accent-line line-3"></div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2023 BrailleSpeech | Futuristic Accessibility Technology</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/6.6.3/wavesurfer.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
