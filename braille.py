@@ -187,6 +187,20 @@ def brailleToTextArray(array):
 def brailleToSpeechArray(array):
     textToSpeech(brailleToTextArray(array))
 
+def brailleToText(braille_string):
+    """Convert a string of Braille Unicode characters to text"""
+    text = ''
+    for char in braille_string:
+        if char in brailles:
+            index = brailles.index(char)
+            text += asciicodes[index]
+    return text
+
+def brailleToSpeech(braille_string):
+    """Convert a string of Braille Unicode characters to speech"""
+    text = brailleToText(braille_string)
+    textToSpeech(text)
+
 def brailleToSpeechImg(imgs):
     for img in imgs:
         for chars in letterToImgPath:
@@ -198,6 +212,3 @@ def imageToSpeech(img):
     textToSpeech(imageToText(img))
 def imageToBraille(img):
     textToBraille(imageToText(img))
-
-
-imageToText("puretext.jpeg")

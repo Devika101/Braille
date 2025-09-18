@@ -1,0 +1,18 @@
+Metadata-Version: 2.4
+Name: braille
+Version: 0.1
+Summary: A Python module for conversion between text, image, speech, and braille
+Home-page: https://github.com/AaditT/braille
+Author: Aadit Trivedi
+Author-email: 
+Requires-Dist: numpy
+Requires-Dist: pillow
+Requires-Dist: pytesseract
+Requires-Dist: matplotlib
+Requires-Dist: opencv-python
+Requires-Dist: SpeechRecognition
+Requires-Dist: pyaudio
+Dynamic: author
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: summary

@@ -1,0 +1,7 @@
+numpy
+pillow
+pytesseract
+matplotlib
+opencv-python
+SpeechRecognition
+pyaudio

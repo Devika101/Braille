@@ -1,1 +1,25 @@
-Contains example programs using the Braille library
+# Braille Library Examples
+
+This directory contains example scripts demonstrating how to use the braille library.
+
+## Available Examples
+
+1. **pic.py** - Takes a photo using your webcam and converts any text in the image to braille
+   ```
+   python pic.py
+   ```
+
+2. **demo.py** - Demonstrates basic text-to-braille and braille-to-text functionality
+   ```
+   python demo.py
+   ```
+
+3. **image_demo.py** - Demonstrates image-to-text, image-to-braille, and image-to-speech functionality
+   ```
+   python image_demo.py [path_to_image]
+   ```
+   If no image path is provided, it will use the test.jpg image from the images directory.
+
+## Requirements
+
+Make sure you have installed all the required dependencies as mentioned in the main README file.
