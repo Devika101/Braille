@@ -1,344 +1,193 @@
-# #!/usr/bin/env python3
-# # -*- coding: utf-8 -*-
-
-# # Braille to Speech Web Application
-# # Flask server to connect the web UI with the Python backend
-
-# from flask import Flask, render_template, request, jsonify, send_from_directory
-# import os
-# import base64
-# import tempfile
-# import braille
-# import io
-# from PIL import Image
-# import numpy as np
-# from pytesseract import image_to_string
-
-# app = Flask(__name__, 
-#             static_folder='web/static',
-#             template_folder='web/templates')
-
-# # ...existing code...
-
-# # ...existing code...
-
-# # Add Braille to Text (no speech) endpoint after app is defined
-# @app.route('/api/braille-to-text', methods=['POST'])
-# def api_braille_to_text():
-#     """Convert Braille text to normal text and return the result (no speech)"""
-#     try:
-#         data = request.json
-#         braille_text = data.get('braille_text', '')
-#         if not braille_text:
-#             return jsonify({'error': 'No Braille text provided'}), 400
-#         # Convert Braille to text
-#         text = braille.brailleToText(braille_text)
-#         return jsonify({'text': text})
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
-
-# # Unicode Braille image to text/speech endpoint (after app is defined)
-# @app.route('/api/image-to-braille', methods=['POST'])
-# def api_image_to_braille():
-#     """Extract Braille Unicode from uploaded image, convert to text, and return result"""
-#     try:
-#         if 'image' not in request.files:
-#             return jsonify({'error': 'No image uploaded'}), 400
-#         image_file = request.files['image']
-#         # Read image into PIL Image
-#         img = Image.open(image_file.stream)
-#         # Use pytesseract to extract Unicode Braille from image
-#         braille_unicode = image_to_string(img, lang=None)
-#         # Convert Braille Unicode to text
-#         text = braille.brailleToText(braille_unicode)
-#         # Optionally, generate speech as well (reuse espeak logic)
-#         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-#             temp_filename = temp_file.name
-#         os.system(f'espeak -v en-us -s 150 -p 50 "{text}" -w {temp_filename}')
-#         with open(temp_filename, 'rb') as audio_file:
-#             audio_data = audio_file.read()
-#             audio_base64 = base64.b64encode(audio_data).decode('utf-8')
-#         os.unlink(temp_filename)
-#         return jsonify({
-#             'braille_unicode': braille_unicode,
-#             'text': text,
-#             'audio_base64': audio_base64
-#         })
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
-# #!/usr/bin/env python3
-# # -*- coding: utf-8 -*-
-
-# # Braille to Speech Web Application
-# # Flask server to connect the web UI with the Python backend
-
-# from flask import Flask, render_template, request, jsonify, send_from_directory
-# import os
-# import base64
-# import tempfile
-# import braille
-# import io
-# from PIL import Image
-# import numpy as np
-
-# app = Flask(__name__, 
-#             static_folder='web/static',
-#             template_folder='web/templates')
-
-# @app.route('/')
-# def index():
-#     """Render the main page"""
-#     return render_template('index.html')
-
-# @app.route('/api/braille-to-speech', methods=['POST'])
-# def api_braille_to_speech():
-#     """Convert Braille text to speech and return the result"""
-#     try:
-#         data = request.json
-#         braille_text = data.get('braille_text', '')
-        
-#         if not braille_text:
-#             return jsonify({'error': 'No Braille text provided'}), 400
-        
-#         # Convert Braille to text
-#         text = braille.brailleToText(braille_text)
-        
-#         # Create a temporary file to store the audio
-#         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-#             temp_filename = temp_file.name
-
-#         # Use espeak to generate speech (with improved parameters for better quality)
-#         os.system(f'espeak -v en-us -s 150 -p 50 "{text}" -w {temp_filename}')
-
-#         # Read the audio file and convert to base64
-#         with open(temp_filename, 'rb') as audio_file:
-#             audio_data = audio_file.read()
-#             audio_base64 = base64.b64encode(audio_data).decode('utf-8')
-
-#         # Clean up the temporary file
-#         os.unlink(temp_filename)
-
-#         return jsonify({
-#             'text': text,
-#             'audio_base64': audio_base64
-#         })
-    
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
-
-# # Image-to-Braille endpoint removed as per requirements
-
-# @app.route('/api/text-to-braille', methods=['POST'])
-# def api_text_to_braille():
-#     """Convert text to Braille and return the result"""
-#     try:
-#         data = request.json
-#         text = data.get('text', '')
-        
-#         if not text:
-#             return jsonify({'error': 'No text provided'}), 400
-        
-#         # Convert text to Braille
-#         braille_text = braille.textToBraille(text)
-        
-#         return jsonify({
-#             'braille_text': braille_text
-#         })
-    
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
-
-# @app.route('/api/braille-keyboard', methods=['POST'])
-# def api_braille_keyboard():
-#     """Convert Braille dot pattern to character"""
-#     try:
-#         data = request.json
-#         dot_pattern = data.get('dot_pattern', [])
-        
-#         if not dot_pattern or len(dot_pattern) != 6:
-#             return jsonify({'error': 'Invalid dot pattern'}), 400
-        
-#         # Convert the dot pattern to a 2D array format
-#         braille_array = [
-#             [dot_pattern[0], dot_pattern[1]],
-#             [dot_pattern[2], dot_pattern[3]],
-#             [dot_pattern[4], dot_pattern[5]]
-#         ]
-        
-#         # Convert the array to a character
-#         character = braille.brailleToTextArray([braille_array])
-        
-#         return jsonify({
-#             'character': character
-#         })
-    
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
-
-# if __name__ == '__main__':
-#     app.run(debug=True, port=5000)
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-# Braille to Speech Web Application
-# Flask server to connect the web UI with the Python backend
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-# Braille to Speech Web Application
-# Flask server to connect the web UI with the Python backend
 
 from flask import Flask, render_template, request, jsonify
 import os
 import base64
 import tempfile
-import braille
 from PIL import Image
-from pytesseract import image_to_string
+import cv2
+import numpy as np
+from braille import brailleToText, textToBraille, textToSpeech
+import pytesseract
+from gtts import gTTS
+from io import BytesIO
+import base64
 
 app = Flask(__name__,
             static_folder='web/static',
             template_folder='web/templates')
 
-# ----------------------
-# Routes
-# ----------------------
 
 @app.route('/')
 def index():
-    """Render the main page"""
     return render_template('index.html')
 
 
-# 1️⃣ Braille to Speech
-@app.route('/api/braille-to-speech', methods=['POST'])
-def api_braille_to_speech():
+# -------------------------------
+# Image to Braille Unicode + Text
+# -------------------------------
+@app.route('/api/image-to-braille', methods=['POST'])
+def api_image_to_braille():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image uploaded'}), 400
     try:
-        data = request.json
-        braille_text = data.get('braille_text', '')
+        file = request.files["image"]
+        # Save image temporarily
+        temp_path = "temp_braille.jpg"
+        file.save(temp_path)
 
-        if not braille_text:
-            return jsonify({'error': 'No Braille text provided'}), 400
+        # Load image with OpenCV
+        img = cv2.imread(temp_path, cv2.IMREAD_GRAYSCALE)
+        # Preprocess: blur, threshold
+        blurred = cv2.GaussianBlur(img, (5, 5), 0)
+        _, thresh = cv2.threshold(blurred, 127, 255, cv2.THRESH_BINARY_INV)
 
-        text = braille.brailleToText(braille_text)
+        # Detect circles (dots) using HoughCircles
+        circles = cv2.HoughCircles(thresh, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20,
+                                   param1=50, param2=15, minRadius=5, maxRadius=15)
 
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
-            temp_filename = temp_file.name
+        detected = []
+        if circles is not None:
+            circles = np.round(circles[0, :]).astype("int")
+            for (x, y, r) in circles:
+                detected.append((x, y, r))
 
-        os.system(f'espeak -v en-us -s 150 -p 50 "{text}" -w {temp_filename}')
+        # Group dots into Braille cells (simple grid, assumes regular spacing)
+        # This is a basic demo; for real use, you need clustering and calibration
+        cell_size = 50  # adjust for your image
+        rows = img.shape[0] // cell_size
+        cols = img.shape[1] // cell_size
+        braille_text = ""
+        for row in range(rows):
+            for col in range(cols):
+                # Find dots in this cell
+                cell_dots = [d for d in detected if
+                             row * cell_size <= d[1] < (row + 1) * cell_size and
+                             col * cell_size <= d[0] < (col + 1) * cell_size]
+                # Map dot positions to Braille pattern (very basic)
+                # You need to calibrate dot positions for your setup
+                pattern = [0, 0, 0, 0, 0, 0]
+                for (x, y, r) in cell_dots:
+                    # Estimate dot position in cell (top-left is dot 1)
+                    rel_x = x - col * cell_size
+                    rel_y = y - row * cell_size
+                    if rel_x < cell_size / 2 and rel_y < cell_size / 3:
+                        pattern[0] = 1
+                    elif rel_x < cell_size / 2 and rel_y < 2 * cell_size / 3:
+                        pattern[1] = 1
+                    elif rel_x < cell_size / 2:
+                        pattern[2] = 1
+                    elif rel_y < cell_size / 3:
+                        pattern[3] = 1
+                    elif rel_y < 2 * cell_size / 3:
+                        pattern[4] = 1
+                    else:
+                        pattern[5] = 1
+                # Map pattern to character
+                braille_map = {
+                    (1,0,0,0,0,0): 'a', (1,1,0,0,0,0): 'b', (1,0,0,1,0,0): 'c',
+                    (1,0,0,1,1,0): 'd', (1,0,0,0,1,0): 'e', (1,1,0,1,0,0): 'f',
+                    (1,1,0,1,1,0): 'g', (1,1,0,0,1,0): 'h', (0,1,0,1,0,0): 'i',
+                    (0,1,0,1,1,0): 'j', (1,0,1,0,0,0): 'k', (1,1,1,0,0,0): 'l',
+                    (1,0,1,1,0,0): 'm', (1,0,1,1,1,0): 'n', (1,0,1,0,1,0): 'o',
+                    (1,1,1,1,0,0): 'p', (1,1,1,1,1,0): 'q', (1,1,1,0,1,0): 'r',
+                    (0,1,1,1,0,0): 's', (0,1,1,1,1,0): 't', (1,0,1,0,0,1): 'u',
+                    (1,1,1,0,0,1): 'v', (0,1,0,1,1,1): 'w', (1,0,1,1,0,1): 'x',
+                    (1,0,1,1,1,1): 'y', (1,0,1,0,1,1): 'z', (0,0,0,0,0,0): ' '
+                }
+                char = braille_map.get(tuple(pattern), '?')
+                braille_text += char
+            braille_text += ' '
+        os.remove(temp_path)
 
+        if not braille_text.strip() or set(braille_text) == {'?',' '}:
+            return jsonify({
+                "braille_unicode": "",
+                "text": "",
+                "audio_base64": "",
+                "error": "No Braille text detected in image."
+            }), 400
 
-        with open(temp_filename, 'rb') as audio_file:
-            audio_data = audio_file.read()
-            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+        # Generate audio
+        tts = gTTS(text=braille_text, lang="en")
+        audio_io = BytesIO()
+        tts.write_to_fp(audio_io)
+        audio_io.seek(0)
+        audio_base64 = base64.b64encode(audio_io.read()).decode("utf-8")
 
-        os.unlink(temp_filename)
+        return jsonify({
+            "braille_unicode": braille_text,
+            "text": braille_text,
+            "audio_base64": audio_base64
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-        return jsonify({'text': text, 'audio_base64': audio_base64})
+        return jsonify({
+            'braille_unicode': braille_unicode,
+            'text': text
+        })
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# 2️⃣ Text to Braille
+# -------------------------------
+# Text to Braille
+# -------------------------------
 @app.route('/api/text-to-braille', methods=['POST'])
 def api_text_to_braille():
     try:
         data = request.json
         text = data.get('text', '')
-
         if not text:
             return jsonify({'error': 'No text provided'}), 400
 
-        braille_text = braille.textToBraille(text)
+        braille_text = textToBraille(text)
         return jsonify({'braille_text': braille_text})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# 3️⃣ Braille Keyboard (dot pattern)
-@app.route('/api/braille-keyboard', methods=['POST'])
-def api_braille_keyboard():
-    try:
-        data = request.json
-        dot_pattern = data.get('dot_pattern', [])
-
-        if not dot_pattern or len(dot_pattern) != 6:
-            return jsonify({'error': 'Invalid dot pattern'}), 400
-
-        braille_array = [
-            [dot_pattern[0], dot_pattern[1]],
-            [dot_pattern[2], dot_pattern[3]],
-            [dot_pattern[4], dot_pattern[5]]
-        ]
-
-        character = braille.brailleToTextArray([braille_array])
-        return jsonify({'character': character})
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-# 4️⃣ Image → Braille Unicode only
-@app.route('/api/image-to-braille', methods=['POST'])
-def api_image_to_braille():
-    try:
-        if 'image' not in request.files:
-            return jsonify({'error': 'No image uploaded'}), 400
-
-        image_file = request.files['image']
-        img = Image.open(image_file.stream)
-
-        # OCR → Raw Braille Unicode
-        braille_unicode = image_to_string(img, lang=None)
-
-        return jsonify({'braille_unicode': braille_unicode})
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-# 5️⃣ Braille Unicode → Text
+# -------------------------------
+# Braille to Text
+# -------------------------------
 @app.route('/api/braille-to-text', methods=['POST'])
 def api_braille_to_text():
     try:
         data = request.json
         braille_text = data.get('braille_text', '')
-
         if not braille_text:
             return jsonify({'error': 'No Braille text provided'}), 400
 
-        text = braille.brailleToText(braille_text)
+        text = brailleToText(braille_text)
         return jsonify({'text': text})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# 6️⃣ Optional Combined: Image → Text directly
-@app.route('/api/image-to-text', methods=['POST'])
-def api_image_to_text():
+# -------------------------------
+# Braille to Speech
+# -------------------------------
+@app.route('/api/braille-to-speech', methods=['POST'])
+def api_braille_to_speech():
     try:
-        if 'image' not in request.files:
-            return jsonify({'error': 'No image uploaded'}), 400
+        data = request.json
+        braille_text = data.get('braille_text', '')
+        if not braille_text:
+            return jsonify({'error': 'No Braille text provided'}), 400
 
-        image_file = request.files['image']
-        img = Image.open(image_file.stream)
+        text = brailleToText(braille_text)
+        textToSpeech(text)
 
-        braille_unicode = image_to_string(img, lang=None)
-        text = braille.brailleToText(braille_unicode)
-
-        return jsonify({'braille_unicode': braille_unicode, 'text': text})
+        return jsonify({'text': text, 'message': 'Speech generated'})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# ----------------------
-# Main entry point
-# ----------------------
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
