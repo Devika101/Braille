@@ -1,3 +1,41 @@
+// Handle Braille Unicode image upload and scan
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('braille-image-form');
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const input = document.getElementById('braille-image-input');
+            const resultDiv = document.getElementById('image-scan-result');
+            if (!input.files || !input.files[0]) {
+                resultDiv.innerHTML = '<span style="color:red">Please select an image.</span>';
+                return;
+            }
+            const formData = new FormData();
+            formData.append('image', input.files[0]);
+            resultDiv.innerHTML = 'Scanning...';
+            try {
+                const response = await fetch('/api/image-to-braille', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.error) {
+                    resultDiv.innerHTML = `<span style="color:red">${data.error}</span>`;
+                } else {
+                    let html = '';
+                    html += `<b>Braille Unicode:</b><br><pre>${data.braille_unicode}</pre>`;
+                    html += `<b>Converted Text:</b> <span style="color:green">${data.text}</span><br>`;
+                    if (data.audio_base64) {
+                        html += `<audio controls src="data:audio/wav;base64,${data.audio_base64}"></audio>`;
+                    }
+                    resultDiv.innerHTML = html;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<span style="color:red">Error: ${err.message}</span>`;
+            }
+        });
+    }
+});
 // Braille to Speech Converter - JavaScript Functionality
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -169,37 +207,33 @@ function initWaveform() {
 function initEventListeners() {
     const convertBtn = document.getElementById('convert-btn');
     const clearBtn = document.getElementById('clear-btn');
-    
-    // Convert button
+
+    // Convert button (handles both text and speech)
     convertBtn.addEventListener('click', function() {
         const brailleInput = document.getElementById('braille-input').value.trim();
-        
         if (brailleInput) {
-            // Add button press effect
             convertBtn.classList.add('button-press');
             setTimeout(() => {
                 convertBtn.classList.remove('button-press');
             }, 300);
-            
-            // Convert Braille to speech
             convertBrailleToSpeech(brailleInput);
         }
     });
-    
+
     // Clear button
     clearBtn.addEventListener('click', function() {
         document.getElementById('braille-input').value = '';
         document.getElementById('text-output').textContent = '';
         wavesurfer.empty();
         audioBlob = null;
-        
-        // Add button press effect
         clearBtn.classList.add('button-press');
         setTimeout(() => {
             clearBtn.classList.remove('button-press');
         }, 300);
     });
 }
+
+// ...existing code...
 
 // Convert Braille to speech using the backend API
 async function convertBrailleToSpeech(brailleText) {

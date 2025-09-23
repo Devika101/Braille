@@ -23,6 +23,15 @@
 
         <!-- Main Content -->
         <main class="main-content">
+            <!-- Image Upload Section for Braille Unicode -->
+            <section class="image-upload-section">
+                <h2>Scan Braille Unicode from Image</h2>
+                <form id="braille-image-form" enctype="multipart/form-data">
+                    <input type="file" id="braille-image-input" name="image" accept="image/*" required />
+                    <button type="submit" class="primary-btn"><span class="btn-text">Scan Image</span> <i class="fas fa-image"></i></button>
+                </form>
+                <div id="image-scan-result" class="scan-result" style="margin-top:1em;"></div>
+            </section>
             <h1 class="title">Braille to Speech Converter</h1>
             <p class="subtitle">Transform Braille into spoken words with futuristic technology</p>
 
@@ -56,7 +65,7 @@
             <!-- Action Buttons -->
             <div class="action-buttons">
                 <button id="convert-btn" class="primary-btn">
-                    <span class="btn-text">Convert to Speech</span>
+                    <span class="btn-text">Convert</span>
                     <i class="fas fa-volume-up"></i>
                 </button>
                 <button id="clear-btn" class="secondary-btn">

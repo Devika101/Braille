@@ -188,12 +188,19 @@ def brailleToSpeechArray(array):
     textToSpeech(brailleToTextArray(array))
 
 def brailleToText(braille_string):
-    """Convert a string of Braille Unicode characters to text"""
+    """Convert a string of Braille Unicode characters to text (a-z and space only)"""
+    # Mapping for a-z and space only
+    braille_to_alpha = {
+        '⠀': ' ',  # U+2800 blank
+        '⠁': 'a', '⠃': 'b', '⠉': 'c', '⠙': 'd', '⠑': 'e',
+        '⠋': 'f', '⠛': 'g', '⠓': 'h', '⠊': 'i', '⠚': 'j',
+        '⠅': 'k', '⠇': 'l', '⠍': 'm', '⠝': 'n', '⠕': 'o',
+        '⠏': 'p', '⠟': 'q', '⠗': 'r', '⠎': 's', '⠞': 't',
+        '⠥': 'u', '⠧': 'v', '⠺': 'w', '⠭': 'x', '⠽': 'y', '⠵': 'z'
+    }
     text = ''
     for char in braille_string:
-        if char in brailles:
-            index = brailles.index(char)
-            text += asciicodes[index]
+        text += braille_to_alpha.get(char, '?')  # Use '?' for unknown chars
     return text
 
 def brailleToSpeech(braille_string):
