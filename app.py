@@ -39,51 +39,129 @@ def api_image_to_braille():
 
         # Load image with OpenCV
         img = cv2.imread(temp_path, cv2.IMREAD_GRAYSCALE)
-        # Preprocess: blur, threshold
-        blurred = cv2.GaussianBlur(img, (5, 5), 0)
-        _, thresh = cv2.threshold(blurred, 127, 255, cv2.THRESH_BINARY_INV)
+        if img is None:
+            return jsonify({'error': 'Could not load image'}), 400
+            
+        print(f"Image loaded: {img.shape}")
+        
+        # Improved preprocessing
+        # Resize image if too large for better processing
+        height, width = img.shape
+        if width > 800:
+            scale = 800 / width
+            new_width = int(width * scale)
+            new_height = int(height * scale)
+            img = cv2.resize(img, (new_width, new_height))
+            print(f"Resized image to: {img.shape}")
+        
+        # Enhanced preprocessing
+        # Apply Gaussian blur to reduce noise
+        blurred = cv2.GaussianBlur(img, (3, 3), 0)
+        
+        # Use adaptive thresholding for better dot detection
+        thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                     cv2.THRESH_BINARY_INV, 11, 2)
+        
+        # Morphological operations to clean up the image
+        kernel = np.ones((2,2), np.uint8)
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+        
+        print("Preprocessing completed")
 
-        # Detect circles (dots) using HoughCircles
-        circles = cv2.HoughCircles(thresh, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20,
-                                   param1=50, param2=15, minRadius=5, maxRadius=15)
-
+        # Improved circle detection with multiple parameter sets
         detected = []
-        if circles is not None:
-            circles = np.round(circles[0, :]).astype("int")
-            for (x, y, r) in circles:
-                detected.append((x, y, r))
+        
+        # Try different parameter sets for different dot sizes
+        param_sets = [
+            {'dp': 1, 'minDist': 10, 'param1': 30, 'param2': 15, 'minRadius': 3, 'maxRadius': 20},
+            {'dp': 1.2, 'minDist': 15, 'param1': 50, 'param2': 20, 'minRadius': 5, 'maxRadius': 25},
+            {'dp': 1.5, 'minDist': 20, 'param1': 70, 'param2': 25, 'minRadius': 8, 'maxRadius': 30}
+        ]
+        
+        for params in param_sets:
+            circles = cv2.HoughCircles(thresh, cv2.HOUGH_GRADIENT, **params)
+            if circles is not None:
+                circles = np.round(circles[0, :]).astype("int")
+                for (x, y, r) in circles:
+                    # Avoid duplicate detections
+                    is_duplicate = False
+                    for existing in detected:
+                        if abs(x - existing[0]) < 10 and abs(y - existing[1]) < 10:
+                            is_duplicate = True
+                            break
+                    if not is_duplicate:
+                        detected.append((x, y, r))
+        
+        print(f"Detected {len(detected)} dots")
+        
+        if len(detected) == 0:
+            # Try alternative detection using contours
+            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            for contour in contours:
+                area = cv2.contourArea(contour)
+                if 10 < area < 500:  # Filter by area
+                    (x, y), radius = cv2.minEnclosingCircle(contour)
+                    if 3 < radius < 20:  # Filter by radius
+                        detected.append((int(x), int(y), int(radius)))
+            print(f"After contour detection: {len(detected)} dots")
 
-        # Group dots into Braille cells (simple grid, assumes regular spacing)
-        # This is a basic demo; for real use, you need clustering and calibration
-        cell_size = 50  # adjust for your image
-        rows = img.shape[0] // cell_size
-        cols = img.shape[1] // cell_size
+        # Adaptive cell size calculation
+        if len(detected) > 0:
+            # Calculate average distance between dots to estimate cell size
+            distances = []
+            for i, dot1 in enumerate(detected):
+                for dot2 in detected[i+1:]:
+                    dist = np.sqrt((dot1[0] - dot2[0])**2 + (dot1[1] - dot2[1])**2)
+                    if 10 < dist < 100:  # Reasonable distance range
+                        distances.append(dist)
+            
+            if distances:
+                avg_distance = np.median(distances)
+                cell_size = max(30, min(80, int(avg_distance * 1.5)))  # Adaptive cell size
+            else:
+                cell_size = 50  # Default fallback
+        else:
+            cell_size = 50
+            
+        print(f"Using cell size: {cell_size}")
+        
+        # Group dots into Braille cells
+        rows = (img.shape[0] + cell_size - 1) // cell_size
+        cols = (img.shape[1] + cell_size - 1) // cell_size
         braille_text = ""
+        
         for row in range(rows):
+            row_text = ""
             for col in range(cols):
                 # Find dots in this cell
-                cell_dots = [d for d in detected if
-                             row * cell_size <= d[1] < (row + 1) * cell_size and
-                             col * cell_size <= d[0] < (col + 1) * cell_size]
-                # Map dot positions to Braille pattern (very basic)
-                # You need to calibrate dot positions for your setup
+                cell_dots = []
+                for (x, y, r) in detected:
+                    if (row * cell_size <= y < (row + 1) * cell_size and 
+                        col * cell_size <= x < (col + 1) * cell_size):
+                        cell_dots.append((x, y, r))
+                
+                # Map dot positions to Braille pattern
                 pattern = [0, 0, 0, 0, 0, 0]
                 for (x, y, r) in cell_dots:
-                    # Estimate dot position in cell (top-left is dot 1)
-                    rel_x = x - col * cell_size
-                    rel_y = y - row * cell_size
-                    if rel_x < cell_size / 2 and rel_y < cell_size / 3:
-                        pattern[0] = 1
-                    elif rel_x < cell_size / 2 and rel_y < 2 * cell_size / 3:
-                        pattern[1] = 1
-                    elif rel_x < cell_size / 2:
-                        pattern[2] = 1
-                    elif rel_y < cell_size / 3:
-                        pattern[3] = 1
-                    elif rel_y < 2 * cell_size / 3:
-                        pattern[4] = 1
+                    # Calculate relative position within cell
+                    rel_x = (x - col * cell_size) / cell_size
+                    rel_y = (y - row * cell_size) / cell_size
+                    
+                    # Improved dot position mapping
+                    if rel_x < 0.5 and rel_y < 0.33:
+                        pattern[0] = 1  # Top-left
+                    elif rel_x < 0.5 and rel_y < 0.66:
+                        pattern[1] = 1  # Middle-left
+                    elif rel_x < 0.5:
+                        pattern[2] = 1  # Bottom-left
+                    elif rel_y < 0.33:
+                        pattern[3] = 1  # Top-right
+                    elif rel_y < 0.66:
+                        pattern[4] = 1  # Middle-right
                     else:
-                        pattern[5] = 1
+                        pattern[5] = 1  # Bottom-right
+                
                 # Map pattern to character
                 braille_map = {
                     (1,0,0,0,0,0): 'a', (1,1,0,0,0,0): 'b', (1,0,0,1,0,0): 'c',
@@ -97,16 +175,20 @@ def api_image_to_braille():
                     (1,0,1,1,1,1): 'y', (1,0,1,0,1,1): 'z', (0,0,0,0,0,0): ' '
                 }
                 char = braille_map.get(tuple(pattern), '?')
-                braille_text += char
-            braille_text += ' '
+                row_text += char
+            braille_text += row_text + ' '
+        
+        print(f"Detected text: '{braille_text}'")
+        
+        # Clean up
         os.remove(temp_path)
 
-        if not braille_text.strip() or set(braille_text) == {'?',' '}:
+        if not braille_text.strip() or set(braille_text.replace(' ', '')) == {'?'}:
             return jsonify({
                 "braille_unicode": "",
                 "text": "",
                 "audio_base64": "",
-                "error": "No Braille text detected in image."
+                "error": f"No Braille text detected in image. Found {len(detected)} dots but couldn't map to text."
             }), 400
 
         # Generate audio
@@ -122,6 +204,7 @@ def api_image_to_braille():
             "audio_base64": audio_base64
         })
     except Exception as e:
+        print(f"Error in image processing: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
         return jsonify({
@@ -181,9 +264,19 @@ def api_braille_to_speech():
             return jsonify({'error': 'No Braille text provided'}), 400
 
         text = brailleToText(braille_text)
-        textToSpeech(text)
+        
+        # Generate audio using gTTS
+        tts = gTTS(text=text, lang="en")
+        audio_io = BytesIO()
+        tts.write_to_fp(audio_io)
+        audio_io.seek(0)
+        audio_base64 = base64.b64encode(audio_io.read()).decode("utf-8")
 
-        return jsonify({'text': text, 'message': 'Speech generated'})
+        return jsonify({
+            'text': text, 
+            'message': 'Speech generated',
+            'audio_base64': audio_base64
+        })
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

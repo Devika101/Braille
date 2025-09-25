@@ -173,8 +173,42 @@ def textToBraille(text):
     print(final_string)
     return final_string
 def textToSpeech(text):
-    if ((os.system("espeak '" + str(text) + "'")) != 0):
-        print("Client error: system does not support text-to-audio // may need to download [espeak] command line package")
+    try:
+        # Try espeak first (for Linux/Mac)
+        if os.system("espeak '" + str(text) + "'") == 0:
+            return
+    except:
+        pass
+    
+    # Fallback to gTTS (Google Text-to-Speech)
+    try:
+        from gtts import gTTS
+        import pygame
+        import tempfile
+        import os
+        
+        # Create temporary audio file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp_file:
+            tts = gTTS(text=text, lang='en')
+            tts.save(tmp_file.name)
+            
+            # Play the audio file
+            pygame.mixer.init()
+            pygame.mixer.music.load(tmp_file.name)
+            pygame.mixer.music.play()
+            
+            # Wait for playback to finish
+            while pygame.mixer.music.get_busy():
+                pygame.time.wait(100)
+            
+            # Clean up
+            pygame.mixer.quit()
+            os.unlink(tmp_file.name)
+            
+    except ImportError:
+        print("Client error: gTTS or pygame not available. Please install: pip install gtts pygame")
+    except Exception as e:
+        print(f"Client error: Speech generation failed: {e}")
     
 def brailleToTextArray(array):
     new_chars = ''
